@@ -8,8 +8,8 @@ RUN go mod download
 
 COPY . .
 
-# 👇 Build using Go module-aware path
-RUN go build -o main github.com/yourusername/uptime-monitor/api
+# ✅ Build local package, not external
+RUN go build -o main .
 
 EXPOSE 8080
 CMD ["./main"]

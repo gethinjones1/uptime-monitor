@@ -1,0 +1,36 @@
+package handlers
+
+import (
+	"net/http"
+	"uptime-monitor/api/database"
+	"uptime-monitor/api/models"
+
+	"github.com/gin-gonic/gin"
+)
+
+type CreateURLRequest struct {
+	URL string `json:"url" binding:"required,url"`
+}
+
+func CreateMonitoredURL(c *gin.Context) {
+	var req CreateURLRequest
+
+	// Validate input
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
+		return
+	}
+
+	// Insert into DB
+	query := `INSERT INTO monitored_urls (url) VALUES ($1) RETURNING id, created_at`
+	var url models.MonitoredURL
+	url.URL = req.URL
+
+	err := database.DB.QueryRow(query, url.URL).Scan(&url.ID, &url.CreatedAt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database insert failed: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, url)
+}

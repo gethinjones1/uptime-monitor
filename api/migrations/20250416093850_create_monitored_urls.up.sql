@@ -1,1 +1,5 @@
-DROP TABLE IF EXISTS monitored_urls;
+CREATE TABLE monitored_urls (
+  id SERIAL PRIMARY KEY,
+  url TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

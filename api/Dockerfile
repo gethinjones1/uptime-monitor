@@ -2,13 +2,16 @@ FROM golang:1.21-alpine
 
 WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
-RUN go mod download
+# Copy entire project to access go.work & shared/
+COPY .. /app
 
-COPY . .
+# Set working directory to api module
+WORKDIR /app/api
 
-# ✅ Build local package, not external
+# Download deps in context of the workspace
+RUN go mod tidy
+
+# Build
 RUN go build -o main .
 
 EXPOSE 8080

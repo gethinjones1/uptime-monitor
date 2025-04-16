@@ -1,4 +1,4 @@
-module uptime-monitor/worker
+module uptime-monitor/shared
 
 go 1.20
 

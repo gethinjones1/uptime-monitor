@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 	"os"
-	"uptime-monitor/api/database"
 	"uptime-monitor/api/routes"
+	"uptime-monitor/shared/database"
 )
 
 func main() {

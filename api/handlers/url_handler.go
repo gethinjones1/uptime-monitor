@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"net/http"
-	"uptime-monitor/api/database"
 	"uptime-monitor/api/models"
+	"uptime-monitor/shared/database"
 
 	"github.com/gin-gonic/gin"
 )

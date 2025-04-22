@@ -34,3 +34,22 @@ func CreateMonitoredURL(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, url)
 }
+
+func ListMonitoredURLs(c *gin.Context) {
+	rows, err := database.DB.Query("SELECT id, url, created_at FROM monitored_urls ORDER BY created_at DESC")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database query failed: " + err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var urls []models.MonitoredURL
+	for rows.Next() {
+		var u models.MonitoredURL
+		if err := rows.Scan(&u.ID, &u.URL, &u.CreatedAt); err == nil {
+			urls = append(urls, u)
+		}
+	}
+
+	c.JSON(http.StatusOK, urls)
+}

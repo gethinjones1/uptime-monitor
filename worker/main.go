@@ -44,6 +44,7 @@ func checkAll(db *sql.DB) {
 
 func checkAndLog(db *sql.DB, u MonitoredURL) {
 	client := http.Client{Timeout: 10 * time.Second}
+	start := time.Now() // Start timer
 	resp, err := client.Get(u.URL)
 
 	statusCode := 0
@@ -54,9 +55,10 @@ func checkAndLog(db *sql.DB, u MonitoredURL) {
 		isUp = statusCode < 500
 		resp.Body.Close()
 	}
+	duration := time.Since(start).Milliseconds() // Calculate duration
 
-	_, err = db.Exec(`INSERT INTO url_statuses (url_id, status_code, is_up) VALUES ($1, $2, $3)`,
-		u.ID, statusCode, isUp,
+	_, err = db.Exec(`INSERT INTO url_statuses (url_id, status_code, is_up, response_time) VALUES ($1, $2, $3, $4)`,
+		u.ID, statusCode, isUp, duration,
 	)
 
 	if err != nil {

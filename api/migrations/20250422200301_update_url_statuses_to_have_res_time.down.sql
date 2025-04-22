@@ -1,0 +1,1 @@
+ALTER TABLE url_statuses DROP COLUMN response_time;

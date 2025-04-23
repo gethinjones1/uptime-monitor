@@ -1,33 +1,25 @@
-version: '3.8'
-
+version: "3.8"
 services:
   api:
     build:
-      context: . # 👈 from project root
+      context: .
       dockerfile: api/Dockerfile
     ports:
       - "8080:8080"
     environment:
       - PORT=8080
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=uptime
+      - DATABASE_URL=${DATABASE_URL}
     depends_on:
       - migrate
 
   migrate:
     image: migrate/migrate
-    depends_on:
-      postgres:
-        condition: service_healthy
     command:
       [
         "-path",
         "/migrations",
         "-database",
-        "postgres://postgres:postgres@postgres:5432/uptime?sslmode=disable",
+        "$DATABASE_URL",
         "up"
       ]
     volumes:
@@ -36,34 +28,8 @@ services:
 
   worker:
     build:
-      context: . # 👈 root of your project
-      dockerfile: worker/Dockerfile # 👈 path to Dockerfile from root
-    depends_on:
-      - postgres
+      context: .
+      dockerfile: worker/Dockerfile
     environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=uptime
+      - DATABASE_URL=${DATABASE_URL}
     restart: always
-
-  postgres:
-    image: postgres:14
-    restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: uptime
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-volumes:
-  pgdata:

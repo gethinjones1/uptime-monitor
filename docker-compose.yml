@@ -3,8 +3,13 @@ version: '3.8'
 services:
   api:
     build:
-      context: . # 👈 from project root
+      context: .
       dockerfile: api/Dockerfile
+    working_dir: /app/api # run inside the api module
+    command: [ "air", "-c", ".air.toml" ]       
+    volumes:
+      - ./api:/app/api # mount your api code & config
+      - /app/api/tmp # persist Air’s output dir
     ports:
       - "8080:8080"
     environment:
@@ -36,8 +41,8 @@ services:
 
   worker:
     build:
-      context: . # 👈 root of your project
-      dockerfile: worker/Dockerfile # 👈 path to Dockerfile from root
+      context: .
+      dockerfile: worker/Dockerfile
     depends_on:
       - postgres
     environment:
@@ -63,7 +68,7 @@ services:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 3s
-      retries: 5Z
+      retries: 5
 
 volumes:
   pgdata:

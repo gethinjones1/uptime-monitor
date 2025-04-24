@@ -11,6 +11,7 @@ import (
 type URLStatusResponse struct {
 	ID           int       `json:"id"`
 	URL          string    `json:"url"`
+	NAME         string    `json:"name"`
 	StatusCode   int       `json:"status_code"`
 	IsUp         bool      `json:"is_up"`
 	ResponseTime int       `json:"response_time"`
@@ -23,6 +24,7 @@ func GetStatuses(c *gin.Context) {
 			SELECT DISTINCT ON (u.id)
 			u.id,
 			u.url,
+			u.name,
 			COALESCE(s.status_code, 0),
 			COALESCE(s.is_up, false),
 			COALESCE(s.checked_at, now()),
@@ -52,7 +54,7 @@ func GetStatuses(c *gin.Context) {
 	var results []URLStatusResponse
 	for rows.Next() {
 		var r URLStatusResponse
-		if err := rows.Scan(&r.ID, &r.URL, &r.StatusCode, &r.IsUp, &r.CheckedAt, &r.ResponseTime, &r.Availability); err == nil {
+		if err := rows.Scan(&r.ID, &r.URL, &r.NAME, &r.StatusCode, &r.IsUp, &r.CheckedAt, &r.ResponseTime, &r.Availability); err == nil {
 			results = append(results, r)
 		}
 	}

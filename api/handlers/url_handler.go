@@ -9,7 +9,8 @@ import (
 )
 
 type CreateURLRequest struct {
-	URL string `json:"url" binding:"required,url"`
+	URL  string `json:"url" binding:"required,url"`
+	NAME string `json:"name" binding:"required"`
 }
 
 func CreateMonitoredURL(c *gin.Context) {
@@ -22,11 +23,12 @@ func CreateMonitoredURL(c *gin.Context) {
 	}
 
 	// Insert into DB
-	query := `INSERT INTO monitored_urls (url) VALUES ($1) RETURNING id, created_at`
+	query := `INSERT INTO monitored_urls (url, name) VALUES ($1, $2) RETURNING id, created_at`
 	var url models.MonitoredURL
 	url.URL = req.URL
+	url.NAME = req.NAME
 
-	err := database.DB.QueryRow(query, url.URL).Scan(&url.ID, &url.CreatedAt)
+	err := database.DB.QueryRow(query, url.URL, url.NAME).Scan(&url.ID, &url.CreatedAt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database insert failed: " + err.Error()})
 		return

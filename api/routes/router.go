@@ -12,9 +12,11 @@ func SetupRouter() *gin.Engine {
 
 	r.Use(cors.Default())
 
-	r.GET("/healthz", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
-	})
+	r.POST("/login", handlers.Login)
+
+	r.POST("/cli/session", handlers.CreateCLISession)
+	r.GET("/cli/session/:id/status", handlers.GetCLISessionStatus)
+	r.POST("/cli/session/:id/complete", handlers.CompleteCLISession)
 
 	r.POST("/urls", handlers.CreateMonitoredURL)
 	r.GET("/urls", handlers.ListMonitoredURLs)

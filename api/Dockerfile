@@ -1,18 +1,30 @@
+# api/Dockerfile
+
+# Use Go on Alpine for a small base
 FROM golang:1.23-alpine
 
+# Install Git (for fetching modules) and Air for live reload\
+RUN apk add --no-cache git curl \
+    && go install github.com/air-verse/air@latest
+
+# Set working directory at project root
 WORKDIR /app
 
-# Copy entire project to access go.work & shared/
-COPY .. /app
+# Copy module files for the API and shared modules to cache dependencies
+COPY api/go.mod api/go.sum ./api/
+COPY shared ./shared
 
-# Set working directory to api module
+# Download modules (including local replace to shared)
+RUN cd api && go mod download
+
+# Copy the rest of the project source
+COPY . .
+
+# Switch to the API module directory
 WORKDIR /app/api
 
-# Download deps in context of the workspace
-RUN go mod tidy
-
-# Build
-RUN go build -o main .
-
+# Expose port
 EXPOSE 8080
-CMD ["./main"]
+
+# Start using Air for live rebuilds
+CMD ["air", "-c", "/app/api/.air.toml"]

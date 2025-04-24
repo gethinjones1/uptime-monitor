@@ -1,0 +1,21 @@
+# Air configuration for live reload
+root = "."
+tmp_dir = "tmp"
+
+# Disable fsnotify (inotify) events; use polling only for Docker mounts
+disable_fsnotify = true
+poll = true
+poll_interval = 1000
+
+[build]
+  # run mod tidy then build into tmp/main
+  cmd = "go mod tidy && go build -o tmp/main ."
+  # binary path relative to root (inside tmp_dir)
+  bin = "tmp/main"
+  # file extensions to watch
+  include_ext = ["go", "tpl", "tmpl", "html"]
+  # directories to skip
+  exclude_dir = ["assets", "tmp", "vendor"]
+
+[log]
+  time = true

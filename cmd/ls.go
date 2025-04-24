@@ -1,53 +1,66 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"os"
+	"io"
+	"log"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 )
 
+type endpointInfo struct {
+	Name        string    `json:"name"`
+	URL         string    `json:"url"`
+	Healthy     bool      `json:"healthy"`
+	LastChecked time.Time `json:"lastChecked"`
+}
+
 var lsCmd = &cobra.Command{
 	Use:   "ls",
-	Short: "List all monitored endpoints and their health",
+	Short: "List all endpoints and their health",
 	Run: func(cmd *cobra.Command, args []string) {
-		eps, err := db.List()
+		_, err := getAuthToken()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "❌ Failed to list endpoints: %v\n", err)
-			os.Exit(1)
+			log.Fatalf("auth failed: %v", err)
 		}
+		endpoint := strings.TrimRight(apiURL, "/") + "/status"
+		resp, err := http.Get(endpoint)
+		if err != nil {
+			log.Fatalf("request failed: %v", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			log.Fatalf("API error (%d): %s", resp.StatusCode, strings.TrimSpace(string(body)))
+		}
+
+		var eps []endpointInfo
+		if err := json.NewDecoder(resp.Body).Decode(&eps); err != nil {
+			log.Fatalf("invalid JSON: %v", err)
+		}
+
 		if len(eps) == 0 {
-			fmt.Println("No endpoints configured.")
+			fmt.Println("No endpoints registered.")
 			return
 		}
 
-		stats, err := db.ListStatuses()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "❌ Failed to list statuses: %v\n", err)
-			os.Exit(1)
-		}
+		fmt.Printf("%-12s  %-30s  %-6s  %s\n",
+			"NAME", "URL", "STATE", "LAST CHECKED")
+		fmt.Println(strings.Repeat("-", 12), strings.Repeat("-", 30),
+			strings.Repeat("-", 6), strings.Repeat("-", 20))
 
-		fmt.Printf("%-10s │ %-30s │ %-7s │ %s\n",
-			"NAME", "URL", "STATUS", "LAST CHECKED")
-		fmt.Println(strings.Repeat("─", 10), "┼", strings.Repeat("─", 30),
-			"┼", strings.Repeat("─", 7), "┼", strings.Repeat("─", 20))
-
-		for name, url := range eps {
-			st, ok := stats[name]
-			status := "UNKNOWN"
-			ts := ""
-			if ok {
-				if st.Healthy {
-					status = "UP"
-				} else {
-					status = "DOWN"
-				}
-				ts = st.LastChecked.Format(time.RFC822)
+		for _, e := range eps {
+			state := "DOWN"
+			if e.Healthy {
+				state = "UP"
 			}
-			fmt.Printf("%-10s │ %-30s │ %-7s │ %s\n",
-				name, url, status, ts)
+			fmt.Printf("%-12s  %-30s  %-6s  %s\n",
+				e.Name, e.URL, state, e.LastChecked.Format(time.RFC822))
 		}
 	},
 }

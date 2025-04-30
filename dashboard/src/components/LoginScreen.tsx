@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
 export const LoginScreen: React.FC<{ onLogin: (credentials: { username: string; password: string }) => void }> = ({ onLogin }) => {
-    const [username, setUsername] = useState("");
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -16,7 +16,7 @@ export const LoginScreen: React.FC<{ onLogin: (credentials: { username: string; 
         setError(null);
         setLoading(true);
         try {
-            await onLogin({ username, password });
+            await onLogin({ email, password });
             navigate(redirect);   // 🚀 Redirect after login
         } catch (err: any) {
             setError(err.message || "Login failed");
@@ -39,8 +39,8 @@ export const LoginScreen: React.FC<{ onLogin: (credentials: { username: string; 
                             <input
                                 id="username"
                                 type="text"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 required
                                 placeholder="Username or email"
                                 className="w-full px-4 py-3 rounded-xl bg-[#f0f2f4] text-base text-[#111418] placeholder-[#637588] focus:outline-none"

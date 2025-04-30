@@ -111,7 +111,7 @@ export const SignUpScreen: React.FC<{ onSignUp: (data: { firstName: string; last
                     </button>
                 </form>
                 <p className="mt-4 text-center text-sm text-[#637588]">
-                    Already have an account? <a href="#" className="font-medium text-[#111418]">Sign in</a>
+                    Already have an account? <a href="/login" className="font-medium text-[#111418]">Sign in</a>
                 </p>
             </div>
         </div>

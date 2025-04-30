@@ -49,7 +49,25 @@ var addCmd = &cobra.Command{
 			"url":  url,
 		})
 		endpoint := strings.TrimRight(apiURL, "/") + "/urls"
-		resp, err := http.Post(endpoint, "application/json", bytes.NewBuffer(payload))
+
+		token, err := getAuthToken()
+		if err != nil {
+			log.Fatalf("auth failed: %v", err)
+		}
+
+		req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(payload))
+		if err != nil {
+			log.Fatalf("request build failed: %v", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Fatalf("request failed: %v", err)
+		}
+
 		if err != nil {
 			log.Fatalf("request failed: %v", err)
 		}

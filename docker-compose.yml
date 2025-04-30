@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: api/Dockerfile
     working_dir: /app/api # run inside the api module
-    command: [ "air", "-c", ".air.toml" ]       
+    command: [ "air", "-c", ".air.toml" ]
     volumes:
       - ./api:/app/api # mount your api code & config
       - /app/api/tmp # persist Air’s output dir
@@ -19,6 +19,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=uptime
+      - JWT_SECRET=+wmTj8iM3drhsuaGDyaAwSeIY/qvdzmjly09hk0zfoI=
     depends_on:
       - migrate
 

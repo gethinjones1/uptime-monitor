@@ -27,8 +27,21 @@ var lsCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("auth failed: %v", err)
 		}
+
 		endpoint := strings.TrimRight(apiURL, "/") + "/status"
-		resp, err := http.Get(endpoint)
+		token, err := getAuthToken()
+		if err != nil {
+			log.Fatalf("auth failed: %v", err)
+		}
+
+		req, err := http.NewRequest("GET", endpoint, nil)
+		if err != nil {
+			log.Fatalf("request build failed: %v", err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
 		if err != nil {
 			log.Fatalf("request failed: %v", err)
 		}

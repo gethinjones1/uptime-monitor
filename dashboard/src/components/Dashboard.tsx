@@ -3,27 +3,42 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Fetch monitored sites
 const fetchMonitoredSites = async () => {
-    const res = await fetch("http://localhost:8080/status");
+    const token = localStorage.getItem("authToken");
+
+    const res = await fetch("http://localhost:8080/status", {
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token ? `Bearer ${token}` : "",
+        }
+    });
     if (!res.ok) throw new Error("Network response was not ok");
     return res.json();
 };
 
 // Post a new URL
-const postNewSite = async (url: string) => {
+const postNewSite = async ({ url, name }: { url: string; name: string }) => {
+    const token = localStorage.getItem("authToken");
+
     const res = await fetch("http://localhost:8080/urls", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            "Authorization": token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, name }),
     });
+
     if (!res.ok) throw new Error("Failed to add new website");
     return res.json();
 };
 
+
+
 export const Dashboard: React.FC = () => {
     const queryClient = useQueryClient();
     const [newUrl, setNewUrl] = useState("");
+    const [newName, setNewName] = useState("");
+
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['monitoredSites'],
@@ -33,6 +48,7 @@ export const Dashboard: React.FC = () => {
     const mutation = useMutation({
         mutationFn: postNewSite,
         onSuccess: () => {
+            setNewName("");
             setNewUrl("");  // Clear input
             queryClient.invalidateQueries({ queryKey: ['monitoredSites'] });  // Refetch data
         }
@@ -41,7 +57,7 @@ export const Dashboard: React.FC = () => {
     const handleAddSite = (e: any) => {
         e.preventDefault();
         if (newUrl.trim() === "") return;
-        mutation.mutate(newUrl);
+        mutation.mutate({ url: newUrl, name: newName });
     };
 
     if (isLoading) return <div className="p-10 text-center">Loading...</div>;
@@ -83,14 +99,31 @@ export const Dashboard: React.FC = () => {
 
                         <div className="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
                             <label className="flex flex-col min-w-40 flex-1">
-                                <form onSubmit={handleAddSite}>
-                                    <input
-                                        value={newUrl}
-                                        onChange={(e) => setNewUrl(e.target.value)}
-                                        placeholder="https://www.example.com"
-                                        className="h-14 p-4 rounded-xl bg-[#f0f2f4] text-base text-[#111418] placeholder-[#637588] focus:outline-none w-full"
-                                    />
+                                <form onSubmit={handleAddSite} className="mt-6">
+                                    <div className="flex flex-col shadow-sm">
+                                        <input
+                                            required
+                                            value={newName}
+                                            onChange={(e) => setNewName(e.target.value)}
+                                            placeholder="My site"
+                                            className="h-14 p-4 rounded-t-xl bg-[#f0f2f4] text-base text-[#111418] placeholder-[#637588] focus:outline-none w-full border border-[#dce0e5] border-b-0"
+                                        />
+                                        <input
+                                            required
+                                            value={newUrl}
+                                            onChange={(e) => setNewUrl(e.target.value)}
+                                            placeholder="https://www.example.com"
+                                            className="h-14 p-4 rounded-b-xl bg-[#f0f2f4] text-base text-[#111418] placeholder-[#637588] focus:outline-none w-full border border-[#dce0e5]"
+                                        />
+                                        <button
+                                            type="submit"
+                                            className="mt-4 h-12 rounded-xl bg-[#111418] hover:bg-[#1e1e1e] transition-colors duration-200 text-white font-semibold text-base w-full flex items-center justify-center gap-2"
+                                        >
+                                            🚀 Monitor This Site
+                                        </button>
+                                    </div>
                                 </form>
+
                             </label>
                         </div>
 
@@ -104,6 +137,7 @@ export const Dashboard: React.FC = () => {
                                 <table className="flex-1">
                                     <thead>
                                         <tr className="bg-white">
+                                            <th className="px-4 py-3 text-left text-sm font-medium text-[#111418] w-[400px]">Name</th>
                                             <th className="px-4 py-3 text-left text-sm font-medium text-[#111418] w-[400px]">URL</th>
                                             <th className="px-4 py-3 text-left text-sm font-medium text-[#111418] w-60">Status</th>
                                             <th className="px-4 py-3 text-left text-sm font-medium text-[#111418] w-[400px]">Response Time</th>
@@ -113,6 +147,7 @@ export const Dashboard: React.FC = () => {
                                     <tbody>
                                         {data?.map((site: any) => (
                                             <tr key={site.url} className="border-t border-[#dce0e5]">
+                                                <td className="px-4 py-2 w-[400px] text-sm text-[#111418]">{site.name}</td>
                                                 <td className="px-4 py-2 w-[400px] text-sm text-[#111418]">{site.url}</td>
                                                 <td className="px-4 py-2 w-60">
                                                     {site.is_up ? `✅` : `🔻`}

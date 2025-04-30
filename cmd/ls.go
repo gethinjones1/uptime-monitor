@@ -15,7 +15,7 @@ import (
 type endpointInfo struct {
 	Name        string    `json:"name"`
 	URL         string    `json:"url"`
-	Healthy     bool      `json:"healthy"`
+	Healthy     bool      `json:"is_up"`
 	LastChecked time.Time `json:"lastChecked"`
 }
 

@@ -19,10 +19,11 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
-func generateToken(email string) (string, error) {
+func generateToken(userID int, email string) (string, error) {
 	claims := jwt.MapClaims{
-		"email": email,
-		"exp":   time.Now().Add(time.Hour * 1).Unix(),
+		"user_id": userID,
+		"email":   email,
+		"exp":     time.Now().Add(time.Hour * 1).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtKey)
@@ -36,8 +37,9 @@ func Login(c *gin.Context) {
 	}
 
 	var hashedPassword string
-	query := `SELECT password FROM users WHERE email = $1`
-	err := database.DB.QueryRow(query, creds.Email).Scan(&hashedPassword)
+	var userId int
+	query := `SELECT id, password FROM users WHERE email = $1`
+	err := database.DB.QueryRow(query, creds.Email).Scan(&userId, &hashedPassword)
 	if err == sql.ErrNoRows {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
@@ -51,7 +53,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := generateToken(creds.Email)
+	token, err := generateToken(userId, creds.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
 		return

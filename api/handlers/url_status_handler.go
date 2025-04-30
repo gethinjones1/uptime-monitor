@@ -20,6 +20,12 @@ type URLStatusResponse struct {
 }
 
 func GetStatuses(c *gin.Context) {
+	userIDVal, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+	userID := userIDVal.(int)
 	query := `
 			SELECT DISTINCT ON (u.id)
 			u.id,
@@ -41,10 +47,12 @@ func GetStatuses(c *gin.Context) {
 			GROUP BY url_id
 		) av
 			ON u.id = av.url_id
+
+		where u.user_id = $1
 		ORDER BY u.id, s.checked_at DESC
 	`
 
-	rows, err := database.DB.Query(query)
+	rows, err := database.DB.Query(query, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch statuses"})
 		return

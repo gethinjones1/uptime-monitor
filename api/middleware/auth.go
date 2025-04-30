@@ -20,7 +20,8 @@ func AuthRequired() gin.HandlerFunc {
 		}
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+
+		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 			return jwtSecret, nil
 		})
 
@@ -28,6 +29,21 @@ func AuthRequired() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			return
 		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+			return
+		}
+
+		userIDFloat, ok := claims["user_id"].(float64) // JWT stores numbers as float64
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "user_id missing in token"})
+			return
+		}
+
+		// Save user_id to context
+		c.Set("user_id", int(userIDFloat))
 
 		c.Next()
 	}
